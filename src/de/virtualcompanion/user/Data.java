@@ -23,6 +23,12 @@ import android.preference.PreferenceManager;
 /*
  * Diese Klasse stellt den Datencontainer sowie die Methoden zum Versenden 
  * an den Webserver bereit.
+ * 
+ * Ablauf: 
+ * 1. Container erstmalig erstellen
+ * dann immer wieder:
+ * - füllen mit updateData(x,y,z);
+ * - senden mit sendData(x,y,z);
  */
 
 public class Data {
@@ -46,12 +52,18 @@ public class Data {
 
 	private Context context;
 	private NetworkInfo netInf;
+	
+	private SharedPreferences prefs;
 
+	Data () {
+		
+	}
+	
 	Data(Context context) {
 	
 		this.context = context;
-		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 		datum = new Date();
+		prefs = PreferenceManager.getDefaultSharedPreferences(context);
 		name = prefs.getString("username", "");
 		httpurl = prefs.getString("httpserver", "");
 		ConnectivityManager conMan = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -60,12 +72,12 @@ public class Data {
 			network_type = netInf.getTypeName();
 		else
 			network_type = netInf.getSubtypeName();
-		
 	}
 	
 	// For Debugging
 	public void publishData() {
 		
+		Debug.doDebug("publishData() called");
 		Debug.doDebug("Datum: " + datum.getTime()/1000);
 		Debug.doDebug("Name: " + name);
 		Debug.doDebug("HTTP-URL: " + httpurl);
@@ -74,10 +86,18 @@ public class Data {
 	
 	public void updateData() {
 		
+		Debug.doDebug("updateData() called");
+		datum = new Date();
+		if (netInf.getType() == 1 ) // Typ 1 = WIFI
+			network_type = netInf.getTypeName();
+		else
+			network_type = netInf.getSubtypeName();
+		
 	}
 	
 	public void sendData() {
 		
+		Debug.doDebug("sendData() called");
 		if (netInf != null && netInf.isConnected())
 			new SendToWebpage().execute(httpurl);
 		else

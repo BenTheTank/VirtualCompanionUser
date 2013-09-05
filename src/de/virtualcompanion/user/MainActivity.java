@@ -3,19 +3,24 @@ package de.virtualcompanion.user;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.Menu;
 import android.view.MenuItem;
 
-public class MainActivity extends Activity {
+public class MainActivity extends Activity implements Runnable {
 
+	// Handler für Zeitverzögertes senden
+	private Handler handler = new Handler();
+	private static final int INTERVALL = 5000; // Verzögerung in ms
+	Data data; // Datencontainer
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		
-		Data item = new Data(this);
-		item.publishData();
-		item.sendData();
+		data = new Data(this);
+		handler.postDelayed(this,INTERVALL); // startet handler (run())!
 	}
 	
 	@Override
@@ -39,4 +44,15 @@ public class MainActivity extends Activity {
 		getMenuInflater().inflate(R.menu.main, menu);
 		return true;
 	}
+
+	@Override
+	public void run() {
+		// Methode für den Handler läuft alle INTERVALL ms
+		data.updateData();
+		data.publishData();
+		data.sendData();
+		
+		handler.postDelayed(this,INTERVALL); // startet nach INTERVALL wieder den handler (Endlosschleife)
+	}
+	
 }
