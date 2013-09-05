@@ -83,6 +83,7 @@ public class ComService extends Service {
 	}
 	
 	public int onStartCommand(Intent intent, int flags, int startId)	{
+		return startId;
 		// Called by the system every time a client explicitly starts the service by calling
 		// startService(Intent), providing the arguments it supplied and a unique integer token
 		// representing the start request. Do not call this method directly.
