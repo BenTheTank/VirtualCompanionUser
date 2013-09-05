@@ -27,7 +27,7 @@ import android.preference.PreferenceManager;
  * Ablauf: 
  * 1. Container erstmalig erstellen
  * dann immer wieder:
- * - füllen mit updateData(x,y,z);
+ * - fuellen mit updateData(x,y,z);
  * - senden mit sendData(x,y,z);
  */
 
@@ -52,12 +52,9 @@ public class Data {
 
 	private Context context;
 	private NetworkInfo netInf;
+	private ConnectivityManager conMan;
 	
 	private SharedPreferences prefs;
-
-	Data () {
-		
-	}
 	
 	Data(Context context) {
 	
@@ -66,12 +63,8 @@ public class Data {
 		prefs = PreferenceManager.getDefaultSharedPreferences(context);
 		name = prefs.getString("username", "");
 		httpurl = prefs.getString("httpserver", "");
-		ConnectivityManager conMan = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-		netInf = conMan.getActiveNetworkInfo();
-		if (netInf.getType() == 1 ) // Typ 1 = WIFI
-			network_type = netInf.getTypeName();
-		else
-			network_type = netInf.getSubtypeName();
+		conMan = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+		network_type = getNetworkType();
 	}
 	
 	// For Debugging
@@ -88,11 +81,8 @@ public class Data {
 		
 		Debug.doDebug("updateData() called");
 		datum = new Date();
-		if (netInf.getType() == 1 ) // Typ 1 = WIFI
-			network_type = netInf.getTypeName();
-		else
-			network_type = netInf.getSubtypeName();
-		
+		network_type = getNetworkType();
+	
 	}
 	
 	public void sendData() {
@@ -102,6 +92,17 @@ public class Data {
 			new SendToWebpage().execute(httpurl);
 		else
 			Debug.doError("No Network Connection available");
+	}
+	
+	private String getNetworkType() {
+		// Holt sich den Netzwerktyp fuer Daten
+		String type;
+		netInf = conMan.getActiveNetworkInfo();
+		if (netInf.getType() == 1 ) // Typ 1 = WIFI
+			type = netInf.getTypeName();
+		else
+			type = netInf.getSubtypeName();
+		return type;
 	}
 	
 	private String startSending(String strUrl, HttpClient httpclient, HttpPost httppost){

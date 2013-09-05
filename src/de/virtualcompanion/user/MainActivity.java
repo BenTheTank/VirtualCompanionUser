@@ -9,9 +9,9 @@ import android.view.MenuItem;
 
 public class MainActivity extends Activity implements Runnable {
 
-	// Handler für Zeitverzögertes senden
+	// Handler fuer zeitverzoegertes senden
 	private Handler handler = new Handler();
-	private static final int INTERVALL = 5000; // Verzögerung in ms
+	private static final int INTERVALL = 5000; // Verzoegerung in ms
 	Data data; // Datencontainer
 	
 	@Override
@@ -47,7 +47,7 @@ public class MainActivity extends Activity implements Runnable {
 
 	@Override
 	public void run() {
-		// Methode für den Handler läuft alle INTERVALL ms
+		// Methode fuer den Handler laeuft alle INTERVALL ms
 		data.updateData();
 		data.publishData();
 		data.sendData();

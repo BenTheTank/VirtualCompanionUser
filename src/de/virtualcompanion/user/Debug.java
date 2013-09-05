@@ -3,8 +3,8 @@ package de.virtualcompanion.user;
 import android.util.Log;
 
 /*
- * Diese Klasse enthält hauptsächlich Hilfsmittel und Methoden,
- * die zum Debuggen der Applikation nützlich sind.
+ * Diese Klasse enthaelt hauptsaechlich Hilfsmittel und Methoden,
+ * die zum Debuggen der Applikation nuetzlich sind.
  */
 
 public class Debug {
