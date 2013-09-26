@@ -51,7 +51,7 @@ public class Data {
 	private String name; // Simpler Benutzername
 	private String ip = "0.0.0.0";
 	private String network_type; // Der Datenempfangstyp (GSM, GPRS, 3G, etc.. )
-	private String verbindung; // Verbindung soll aktiv sein oder beendet
+	private boolean status; // Verbindung soll aktiv sein oder beendet
 	private Date datum; // Aktuelle Zeit
 	
 	// Server
@@ -60,7 +60,6 @@ public class Data {
 	private Context context;
 	private NetworkInfo netInf;
 	private ConnectivityManager conMan;
-	
 	private SharedPreferences prefs;
 	protected LocationManager locationManager;
 	private String locationProvider;
@@ -159,10 +158,20 @@ public class Data {
 		return mlocation;
 	}
 	
+	public void setStatus(boolean status) {
+		this.status = status;
+	}
+	
+	public boolean isStatus() {
+		return this.status;
+	}
+	
+	/*		FOR SENDING		*/
 	private String startSending(String strUrl, HttpClient httpclient, HttpPost httppost){
 		try{
 			List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(1);
 		    nameValuePairs.add(new BasicNameValuePair(TIMESTAMP, String.valueOf(datum.getTime()/1000)));
+		    nameValuePairs.add(new BasicNameValuePair(STATUS, (status ? "TRUE" : "FALSE")));
 		    nameValuePairs.add(new BasicNameValuePair(NAME, name));
 		    nameValuePairs.add(new BasicNameValuePair(IP, ip));
 		    nameValuePairs.add(new BasicNameValuePair(NETWORK, network_type));

@@ -20,10 +20,40 @@ public class MainActivity extends Activity implements Runnable, LocationListener
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+	}
+	
+	@Override
+	protected void onResume() {
+		super.onResume();
 		
-		data = new Data(this);
+		if(data == null)
+			data = new Data(this);
+		data.setStatus(true);
 		handler.postDelayed(this,INTERVALL); // startet handler (run())!
 	}
+	
+	@Override
+	protected void onPause() {
+		super.onPause();
+		
+		data.setStatus(false);
+		data.locationManager.removeUpdates(this);
+	}
+	
+	@Override
+	protected void onStart() {
+		super.onStart();
+	}
+	
+    @Override
+    protected void onStop() {
+        super.onStop();
+    }
+    
+    @Override
+    protected void onDestroy() {
+    	super.onDestroy();
+    }
 	
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item)	{
@@ -54,7 +84,8 @@ public class MainActivity extends Activity implements Runnable, LocationListener
 		data.publishData();
 		data.sendData();
 		
-		handler.postDelayed(this,INTERVALL); // startet nach INTERVALL wieder den handler (Endlosschleife)
+		if (data.isStatus())
+			handler.postDelayed(this,INTERVALL); // startet nach INTERVALL wieder den handler (Endlosschleife)
 	}
 
 	/**
