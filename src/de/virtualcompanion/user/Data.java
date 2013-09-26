@@ -1,8 +1,12 @@
 package de.virtualcompanion.user;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Enumeration;
 import java.util.List;
 
 import org.apache.http.NameValuePair;
@@ -22,6 +26,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.preference.PreferenceManager;
+import android.text.format.Formatter;
 
 /*
  * Diese Klasse stellt den Datencontainer sowie die Methoden zum Versenden 
@@ -44,7 +49,7 @@ public class Data {
 	
 	// Benutzerdaten
 	private String name; // Simpler Benutzername
-	private String ip;
+	private String ip = "0.0.0.0";
 	private String network_type; // Der Datenempfangstyp (GSM, GPRS, 3G, etc.. )
 	private String verbindung; // Verbindung soll aktiv sein oder beendet
 	private Date datum; // Aktuelle Zeit
@@ -69,6 +74,7 @@ public class Data {
 		httpurl = prefs.getString("httpserver", "");
 		conMan = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
 		network_type = getNetworkType();
+		ip = getLocalIpAddress();
 		
 		// Zugriff auf den Location Manager
 		locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
@@ -84,6 +90,7 @@ public class Data {
 		Debug.doDebug("HTTP-URL: " + httpurl);
 		Debug.doDebug("Netzwerktyp: " + network_type);
 		Debug.doDebug("Location: " + location.toString());
+		Debug.doDebug("IP: " + getLocalIpAddress());
 	}
 	
 	public void updateData() {
@@ -92,6 +99,7 @@ public class Data {
 		datum = new Date();
 		network_type = getNetworkType();
 		location = getLocation();
+		ip = getLocalIpAddress();	
 	}
 	
 	public void sendData() {
@@ -107,14 +115,35 @@ public class Data {
 		// Holt sich den Netzwerktyp fuer Daten
 		String type;
 		netInf = conMan.getActiveNetworkInfo();
-		if (netInf.getType() == 1 ) // Typ 1 = WIFI
-			type = netInf.getTypeName();
-		else
-			type = netInf.getSubtypeName();
-		return type;
+		if(netInf != null) {
+			if (netInf.getType() == 1 ) // Typ 1 = WIFI
+				type = netInf.getTypeName();
+			else
+				type = netInf.getSubtypeName();
+			return type;
+		}
+		return null;
 	}
 	
-private Location getLocation() {
+	public String getLocalIpAddress() {
+	    try {
+	        for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements();) {
+	            NetworkInterface intf = en.nextElement();
+	            for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements();) {
+	                InetAddress inetAddress = enumIpAddr.nextElement();
+	                if (!inetAddress.isLoopbackAddress()) {
+	                    String ip = Formatter.formatIpAddress(inetAddress.hashCode());
+	                    return ip;
+	                }
+	            }
+	        }
+	    } catch (SocketException ex) {
+	    	ex.printStackTrace();
+	    }
+	    return null;
+	}
+	
+	private Location getLocation() {
 		// Holt die Location fuer Daten
 		locationProvider = LocationManager.GPS_PROVIDER;
 		locationManager.requestLocationUpdates(locationProvider, 0, 0, (LocationListener) context);
