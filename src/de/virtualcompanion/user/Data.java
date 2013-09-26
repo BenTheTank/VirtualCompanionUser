@@ -65,13 +65,21 @@ public class Data {
 	protected LocationManager locationManager;
 	private String locationProvider;
 	
+	/* Konstanten */	
+	private static final String TIMESTAMP = "timestamp";
+	private static final String STATUS = "status";
+	private static final String NAME = "name";
+	private static final String IP = "ip";
+	private static final String NETWORK = "network";
+	private static final String LOCATION = "location";
+	
 	Data(Context context) {
 	
 		this.context = context;
 		datum = new Date();
 		prefs = PreferenceManager.getDefaultSharedPreferences(context);
-		name = prefs.getString("username", "");
-		httpurl = prefs.getString("httpserver", "");
+		name = prefs.getString("username", "Penis");
+		httpurl = prefs.getString("httpserver", "http://virtuellerbegleiter.rothed.de/post.php");
 		conMan = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
 		network_type = getNetworkType();
 		ip = getLocalIpAddress();
@@ -152,10 +160,14 @@ public class Data {
 	}
 	
 	private String startSending(String strUrl, HttpClient httpclient, HttpPost httppost){
-		String sendString = String.valueOf(datum.getTime()/1000);
 		try{
 			List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(1);
-		    nameValuePairs.add(new BasicNameValuePair("message", sendString));
+		    nameValuePairs.add(new BasicNameValuePair(TIMESTAMP, String.valueOf(datum.getTime()/1000)));
+		    nameValuePairs.add(new BasicNameValuePair(NAME, name));
+		    nameValuePairs.add(new BasicNameValuePair(IP, ip));
+		    nameValuePairs.add(new BasicNameValuePair(NETWORK, network_type));
+		    nameValuePairs.add(new BasicNameValuePair(LOCATION, location.toString()));
+		    
 		    httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
 		    httpclient.execute(httppost);
 		}catch (ClientProtocolException cpex) {
@@ -164,7 +176,7 @@ public class Data {
 		catch (IOException ioex){
 			return ioex.getMessage();
 		}
-		return sendString;
+		return "DONE";
 	}
 	
 	private class SendToWebpage extends AsyncTask<String, String, String>{
