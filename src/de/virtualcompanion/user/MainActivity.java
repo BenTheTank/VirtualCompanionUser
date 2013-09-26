@@ -2,17 +2,19 @@ package de.virtualcompanion.user;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.location.Location;
+import android.location.LocationListener;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.Menu;
 import android.view.MenuItem;
 
-public class MainActivity extends Activity implements Runnable {
+public class MainActivity extends Activity implements Runnable, LocationListener {
 
 	// Handler fuer zeitverzoegertes senden
 	private Handler handler = new Handler();
 	private static final int INTERVALL = 5000; // Verzoegerung in ms
-	Data data; // Datencontainer
+	private Data data; // Datencontainer
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -53,6 +55,33 @@ public class MainActivity extends Activity implements Runnable {
 		data.sendData();
 		
 		handler.postDelayed(this,INTERVALL); // startet nach INTERVALL wieder den handler (Endlosschleife)
+	}
+
+	/**
+	 * Following methods are for LocationListener Implementation
+	 */
+	@Override
+	public void onLocationChanged(Location location) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onProviderDisabled(String provider) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onProviderEnabled(String provider) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onStatusChanged(String provider, int status, Bundle extras) {
+		// TODO Auto-generated method stub
+		
 	}
 	
 }

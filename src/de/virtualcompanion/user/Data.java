@@ -15,6 +15,9 @@ import org.apache.http.message.BasicNameValuePair;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
@@ -37,8 +40,7 @@ public class Data {
 	private String orientation; // Wie ist das Handy ausgerichtet
 	
 	// GPS Daten
-	private String position; // Lang long
-	private String quality; // Wie genau ist die Position
+	private Location location; // Position
 	
 	// Benutzerdaten
 	private String name; // Simpler Benutzername
@@ -55,6 +57,8 @@ public class Data {
 	private ConnectivityManager conMan;
 	
 	private SharedPreferences prefs;
+	protected LocationManager locationManager;
+	private String locationProvider;
 	
 	Data(Context context) {
 	
@@ -65,6 +69,10 @@ public class Data {
 		httpurl = prefs.getString("httpserver", "");
 		conMan = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
 		network_type = getNetworkType();
+		
+		// Zugriff auf den Location Manager
+		locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+		locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, (LocationListener) context);
 	}
 	
 	// For Debugging
@@ -75,6 +83,7 @@ public class Data {
 		Debug.doDebug("Name: " + name);
 		Debug.doDebug("HTTP-URL: " + httpurl);
 		Debug.doDebug("Netzwerktyp: " + network_type);
+		Debug.doDebug("Location: " + location.toString());
 	}
 	
 	public void updateData() {
@@ -82,7 +91,7 @@ public class Data {
 		Debug.doDebug("updateData() called");
 		datum = new Date();
 		network_type = getNetworkType();
-	
+		location = getLocation();
 	}
 	
 	public void sendData() {
@@ -103,6 +112,14 @@ public class Data {
 		else
 			type = netInf.getSubtypeName();
 		return type;
+	}
+	
+private Location getLocation() {
+		// Holt die Location fuer Daten
+		locationProvider = LocationManager.GPS_PROVIDER;
+		locationManager.requestLocationUpdates(locationProvider, 0, 0, (LocationListener) context);
+		Location mlocation = locationManager.getLastKnownLocation(locationProvider);
+		return mlocation;
 	}
 	
 	private String startSending(String strUrl, HttpClient httpclient, HttpPost httppost){
