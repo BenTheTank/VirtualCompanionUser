@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.location.Location;
 import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.Menu;
@@ -29,6 +30,7 @@ public class MainActivity extends Activity implements Runnable, LocationListener
 		if(data == null)
 			data = new Data(this);
 		data.setStatus(true);
+		data.locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, (LocationListener) this);
 		handler.postDelayed(this,INTERVALL); // startet handler (run())!
 	}
 	
@@ -37,7 +39,7 @@ public class MainActivity extends Activity implements Runnable, LocationListener
 		super.onPause();
 		
 		data.setStatus(false);
-		data.locationManager.removeUpdates(this);
+		data.locationManager.removeUpdates((LocationListener) this);
 	}
 	
 	@Override

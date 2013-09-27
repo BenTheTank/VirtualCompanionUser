@@ -62,7 +62,6 @@ public class Data {
 	private ConnectivityManager conMan;
 	private SharedPreferences prefs;
 	protected LocationManager locationManager;
-	private String locationProvider;
 	
 	/* Konstanten */	
 	private static final String TIMESTAMP = "timestamp";
@@ -132,7 +131,7 @@ public class Data {
 		return null;
 	}
 	
-	public String getLocalIpAddress() {
+	private String getLocalIpAddress() {
 	    try {
 	        for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements();) {
 	            NetworkInterface intf = en.nextElement();
@@ -152,9 +151,7 @@ public class Data {
 	
 	private Location getLocation() {
 		// Holt die Location fuer Daten
-		locationProvider = LocationManager.GPS_PROVIDER;
-		locationManager.requestLocationUpdates(locationProvider, 0, 0, (LocationListener) context);
-		Location mlocation = locationManager.getLastKnownLocation(locationProvider);
+		Location mlocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
 		return mlocation;
 	}
 	
