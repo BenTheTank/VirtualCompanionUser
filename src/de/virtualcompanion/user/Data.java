@@ -16,6 +16,8 @@ import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -64,12 +66,18 @@ public class Data {
 	protected LocationManager locationManager;
 	
 	/* Konstanten */	
-	private static final String TIMESTAMP = "timestamp";
-	private static final String STATUS = "status";
-	private static final String NAME = "name";
-	private static final String IP = "ip";
-	private static final String NETWORK = "network";
-	private static final String LOCATION = "location";
+	private static final String TAG_TIMESTAMP = "timestamp";
+	private static final String TAG_STATUS = "status";
+	private static final String TAG_NAME = "name";
+	private static final String TAG_IP = "ip";
+	private static final String TAG_NETWORK = "network";
+	private static final String TAG_LOC = "location";
+	private static final String TAG_LOC_LONG = "long";
+	private static final String TAG_LOC_LAT = "lat";
+	private static final String TAG_LOC_ACC = "acc";
+	private static final String TAG_LOC_ET = "et";
+	private static final String TAG_LOC_ALT = "alt";
+	private static final String TAG_LOC_BEAR = "bear";
 	
 	Data(Context context) {
 	
@@ -97,6 +105,7 @@ public class Data {
 		Debug.doDebug("Netzwerktyp: " + network_type);
 		Debug.doDebug("Location: " + location.toString());
 		Debug.doDebug("IP: " + getLocalIpAddress());
+		Debug.doDebug("JSON: " + writeJSON().toString());
 	}
 	
 	public void updateData() {
@@ -163,16 +172,37 @@ public class Data {
 		return this.status;
 	}
 	
+	private JSONObject writeJSON() {
+		JSONObject object = new JSONObject();
+		JSONObject subobject = new JSONObject();
+		try {
+			subobject.put(TAG_LOC_ACC, location.getAccuracy());
+			subobject.put(TAG_LOC_ALT, location.getAltitude());
+			subobject.put(TAG_LOC_BEAR, location.getBearing());
+			subobject.put(TAG_LOC_LAT, location.getLatitude());
+			subobject.put(TAG_LOC_LONG, location.getLongitude());
+			subobject.put(TAG_LOC_ET, location.getElapsedRealtimeNanos());
+			
+			object.put(TAG_TIMESTAMP, String.valueOf(datum.getTime()/1000));			
+			object.put(TAG_STATUS, (status ? "TRUE" : "FALSE"));
+			object.put(TAG_NAME, name);
+			object.put(TAG_IP, ip);
+			object.put(TAG_NETWORK, network_type);
+
+			object.putOpt(TAG_LOC, subobject);
+			
+			return object;
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
 	/*		FOR SENDING		*/
 	private String startSending(String strUrl, HttpClient httpclient, HttpPost httppost){
 		try{
 			List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(1);
-		    nameValuePairs.add(new BasicNameValuePair(TIMESTAMP, String.valueOf(datum.getTime()/1000)));
-		    nameValuePairs.add(new BasicNameValuePair(STATUS, (status ? "TRUE" : "FALSE")));
-		    nameValuePairs.add(new BasicNameValuePair(NAME, name));
-		    nameValuePairs.add(new BasicNameValuePair(IP, ip));
-		    nameValuePairs.add(new BasicNameValuePair(NETWORK, network_type));
-		    nameValuePairs.add(new BasicNameValuePair(LOCATION, location.toString()));
+		    nameValuePairs.add(new BasicNameValuePair("message", writeJSON().toString()));
 		    
 		    httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
 		    httpclient.execute(httppost);
