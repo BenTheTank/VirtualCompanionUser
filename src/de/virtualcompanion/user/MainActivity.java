@@ -14,7 +14,7 @@ public class MainActivity extends Activity implements Runnable, LocationListener
 
 	// Handler fuer zeitverzoegertes senden
 	private Handler handler = new Handler();
-	private static final int INTERVALL = 5000; // Verzoegerung in ms
+	private static final int INTERVALL = 2000; // Verzoegerung in ms
 	private Data data; // Datencontainer
 	
 	@Override

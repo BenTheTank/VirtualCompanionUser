@@ -71,6 +71,7 @@ public class Data {
 	private static final String TAG_NAME = "name";
 	private static final String TAG_IP = "ip";
 	private static final String TAG_NETWORK = "network";
+	private static final String TAG_PIC = "pic";
 	private static final String TAG_LOC = "location";
 	private static final String TAG_LOC_LONG = "long";
 	private static final String TAG_LOC_LAT = "lat";
@@ -84,7 +85,7 @@ public class Data {
 		this.context = context;
 		datum = new Date();
 		prefs = PreferenceManager.getDefaultSharedPreferences(context);
-		name = prefs.getString("username", "Penis");
+		name = prefs.getString("username", "Unbekannt");
 		httpurl = prefs.getString("httpserver", "http://virtuellerbegleiter.rothed.de/post.php");
 		conMan = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
 		network_type = getNetworkType();
@@ -105,7 +106,7 @@ public class Data {
 		Debug.doDebug("Netzwerktyp: " + network_type);
 		Debug.doDebug("Location: " + location.toString());
 		Debug.doDebug("IP: " + getLocalIpAddress());
-		Debug.doDebug("JSON: " + writeJSON().toString());
+		Debug.doDebug("JSON: " + createJSON().toString());
 	}
 	
 	public void updateData() {
@@ -172,7 +173,7 @@ public class Data {
 		return this.status;
 	}
 	
-	private JSONObject writeJSON() {
+	private JSONObject createJSON() {
 		JSONObject object = new JSONObject();
 		JSONObject subobject = new JSONObject();
 		try {
@@ -188,6 +189,7 @@ public class Data {
 			object.put(TAG_NAME, name);
 			object.put(TAG_IP, ip);
 			object.put(TAG_NETWORK, network_type);
+			object.put(TAG_PIC, "tux.jpg");
 
 			object.putOpt(TAG_LOC, subobject);
 			
@@ -202,7 +204,7 @@ public class Data {
 	private String startSending(String strUrl, HttpClient httpclient, HttpPost httppost){
 		try{
 			List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(1);
-		    nameValuePairs.add(new BasicNameValuePair("message", writeJSON().toString()));
+		    nameValuePairs.add(new BasicNameValuePair("message", createJSON().toString()));
 		    
 		    httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
 		    httpclient.execute(httppost);
