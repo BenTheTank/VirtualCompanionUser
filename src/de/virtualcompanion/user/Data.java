@@ -168,7 +168,10 @@ public class Data {
 	
 	private Location getLocation() {
 		// Holt die Location fuer Daten
-		Location mlocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+		Location mlocation;
+		if((mlocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)) == null)
+			if((mlocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)) == null)
+				mlocation = locationManager.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER);
 		return mlocation;
 	}
 	
