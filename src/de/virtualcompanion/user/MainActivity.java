@@ -29,7 +29,7 @@ public class MainActivity extends Activity implements Runnable, LocationListener
 
 	// Handler fuer zeitverzoegertes senden
 	private Handler handler = new Handler();
-	private static final int INTERVALL = 2000; // Verzoegerung in ms
+	private static final int INTERVALL = 50; // Verzoegerung in ms
 	private Data data; // Datencontainer
 	
 	// Kamera
@@ -50,7 +50,7 @@ public class MainActivity extends Activity implements Runnable, LocationListener
 	@Override
 	protected void onResume() {
 		super.onResume();
-		
+
 		if(data == null)
 			data = new Data(this);
 		data.setStatus(true);
