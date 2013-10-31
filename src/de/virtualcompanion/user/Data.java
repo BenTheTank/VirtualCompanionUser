@@ -55,6 +55,10 @@ public class Data {
 	private String network_type; // Der Datenempfangstyp (GSM, GPRS, 3G, etc.. )
 	private boolean status; // Verbindung soll aktiv sein oder beendet
 	private Date datum; // Aktuelle Zeit
+	private long id = 0; // Zur Identifizierung und Verzoegerungsmessung
+	
+	// Bild-binary
+	private String pic;
 	
 	// Server
 	private String httpurl; // HTTP Server address
@@ -67,6 +71,7 @@ public class Data {
 	
 	/* Konstanten */	
 	private static final String TAG_TIMESTAMP = "timestamp";
+	private static final String TAG_ID = "id";
 	private static final String TAG_STATUS = "status";
 	private static final String TAG_NAME = "name";
 	private static final String TAG_IP = "ip";
@@ -101,6 +106,7 @@ public class Data {
 		
 		Debug.doDebug("publishData() called");
 		Debug.doDebug("Datum: " + datum.getTime()/1000);
+		Debug.doDebug("ID:" + id);
 		Debug.doDebug("Name: " + name);
 		Debug.doDebug("HTTP-URL: " + httpurl);
 		Debug.doDebug("Netzwerktyp: " + network_type);
@@ -115,7 +121,8 @@ public class Data {
 		datum = new Date();
 		network_type = getNetworkType();
 		location = getLocation();
-		ip = getLocalIpAddress();	
+		ip = getLocalIpAddress();
+		id++;
 	}
 	
 	public void sendData() {
@@ -173,6 +180,10 @@ public class Data {
 		return this.status;
 	}
 	
+	public void setPic(String pic) {
+		this.pic = pic;
+	}
+	
 	private JSONObject createJSON() {
 		JSONObject object = new JSONObject();
 		JSONObject subobject = new JSONObject();
@@ -184,12 +195,13 @@ public class Data {
 			subobject.put(TAG_LOC_LONG, location.getLongitude());
 			subobject.put(TAG_LOC_ET, location.getElapsedRealtimeNanos());
 			
-			object.put(TAG_TIMESTAMP, String.valueOf(datum.getTime()/1000));			
+			object.put(TAG_TIMESTAMP, String.valueOf(datum.getTime()/1000));	
+			object.put(TAG_ID, id);
 			object.put(TAG_STATUS, (status ? "TRUE" : "FALSE"));
 			object.put(TAG_NAME, name);
 			object.put(TAG_IP, ip);
 			object.put(TAG_NETWORK, network_type);
-			object.put(TAG_PIC, "tux.jpg");
+			object.put(TAG_PIC, pic);
 
 			object.putOpt(TAG_LOC, subobject);
 			
@@ -219,6 +231,7 @@ public class Data {
 	
 	private class SendToWebpage extends AsyncTask<String, String, String>{
 		@Override
+		
 		protected String doInBackground(String... httpurl){
 			HttpClient httpclient = new DefaultHttpClient();
 	   	    HttpPost httppost = new HttpPost(httpurl[0]);
