@@ -56,12 +56,17 @@ public class Data {
 	private boolean status; // Verbindung soll aktiv sein oder beendet
 	private Date datum; // Aktuelle Zeit
 	private long id = 0; // Zur Identifizierung und Verzoegerungsmessung
+	private String resolution = "low";
+	private boolean camChanged = true;
+	private boolean flashlight;
 	
 	// Bild-binary
 	private String pic;
 	
 	// Server
-	private String httpurl; // HTTP Server address
+	private String domain = "http://virtuellerbegleiter.rothed.de/";
+	private String get = "remessages.html";
+	private String post = "post.php";
 
 	private Context context;
 	private NetworkInfo netInf;
@@ -84,6 +89,9 @@ public class Data {
 	private static final String TAG_LOC_ET = "et";
 	private static final String TAG_LOC_ALT = "alt";
 	private static final String TAG_LOC_BEAR = "bear";
+	/* Zu empfangende Konstanten */
+	public static final String TAG_RESOLUTION = "resolution";
+	public static final String TAG_FLASHLIGHT = "flashlight";
 	
 	Data(Context context) {
 	
@@ -91,7 +99,6 @@ public class Data {
 		datum = new Date();
 		prefs = PreferenceManager.getDefaultSharedPreferences(context);
 		name = prefs.getString("username", "Unbekannt");
-		httpurl = prefs.getString("httpserver", "http://virtuellerbegleiter.rothed.de/post.php");
 		conMan = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
 		network_type = getNetworkType();
 		ip = getLocalIpAddress();
@@ -108,7 +115,7 @@ public class Data {
 		Debug.doDebug("Datum: " + datum.getTime()/1000);
 		Debug.doDebug("ID:" + id);
 		Debug.doDebug("Name: " + name);
-		Debug.doDebug("HTTP-URL: " + httpurl);
+		Debug.doDebug("HTTP-URL: " + domain + post);
 		Debug.doDebug("Netzwerktyp: " + network_type);
 		Debug.doDebug("Location: " + location.toString());
 		Debug.doDebug("IP: " + getLocalIpAddress());
@@ -129,9 +136,30 @@ public class Data {
 		
 		Debug.doDebug("sendData() called");
 		if (netInf != null && netInf.isConnected())
-			new SendToWebpage().execute(httpurl);
+			new SendToWebpage().execute(domain + post);
+			//new SendToWebpage().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, domain + post);
 		else
 			Debug.doError("No Network Connection available");
+	}
+	
+	public void getData() {
+		Debug.doDebug("getData() called");
+		new JSONParser(this).execute(domain + get);
+	}
+	
+	public void fillData(JSONObject rawData) {        
+        try {                              
+            // Storing each json item in variable        	
+        	
+        	if(!resolution.equals(rawData.getString(TAG_RESOLUTION)) || (flashlight != rawData.getBoolean(TAG_FLASHLIGHT)))
+        		camChanged = true;
+        	else 
+        		camChanged = false;
+        	resolution = rawData.getString(TAG_RESOLUTION);
+        	flashlight = rawData.getBoolean(TAG_FLASHLIGHT);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
 	}
 	
 	private String getNetworkType() {
@@ -173,6 +201,22 @@ public class Data {
 			if((mlocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)) == null)
 				mlocation = locationManager.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER);
 		return mlocation;
+	}
+	
+	public boolean getFlashlight () {
+		return flashlight;
+	}
+	
+	public String getResolution() {
+		return resolution;
+	}
+	
+	public boolean CamHasChanged() {
+		return camChanged;
+	}
+	
+	public void CamHasChanged(boolean bool) {
+		camChanged = bool;
 	}
 	
 	public void setStatus(boolean status) {
@@ -234,7 +278,6 @@ public class Data {
 	
 	private class SendToWebpage extends AsyncTask<String, String, String>{
 		@Override
-		
 		protected String doInBackground(String... httpurl){
 			HttpClient httpclient = new DefaultHttpClient();
 	   	    HttpPost httppost = new HttpPost(httpurl[0]);

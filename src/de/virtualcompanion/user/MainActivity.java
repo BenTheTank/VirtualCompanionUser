@@ -25,11 +25,41 @@ import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
-public class MainActivity extends Activity implements Runnable, LocationListener, SurfaceHolder.Callback {
+public class MainActivity extends Activity implements LocationListener, SurfaceHolder.Callback {
 
 	// Handler fuer zeitverzoegertes senden
-	private Handler handler = new Handler();
+	private Handler sethandler = new Handler();
+	private Handler gethandler = new Handler();
+	private Runnable setrun = new Runnable() {
+
+		@Override
+		public void run() {
+			data.getData();
+			if(data.CamHasChanged())
+				setCameraParameters();
+			if (data.isStatus())
+				sethandler.postDelayed(setrun, LONG_INTERVALL); // startet nach INTERVALL wieder den handler (Endlosschleife)
+		}		
+	};
+	
+	private Runnable getrun = new Runnable() {
+
+		@Override
+		public void run() {
+			// Bildle machen
+			if(camera!=null)
+				camera.setOneShotPreviewCallback(precallback);
+			data.updateData();
+			data.publishData();
+			data.sendData();
+			
+			if (data.isStatus())
+				gethandler.postDelayed(getrun, INTERVALL); // startet nach INTERVALL wieder den handler (Endlosschleife)
+		}		
+	};
+
 	private static final int INTERVALL = 50; // Verzoegerung in ms
+	private static final int LONG_INTERVALL = 5000; // Verzoegerung in ms
 	private Data data; // Datencontainer
 	
 	// Kamera
@@ -55,32 +85,20 @@ public class MainActivity extends Activity implements Runnable, LocationListener
 			data = new Data(this);
 		data.setStatus(true);
 		data.locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, (LocationListener) this);
+		data.getData();
 		
 		// prüfen, ob Kamera vorhanden ist
 		camera = Camera.open();
 		if (camera != null) {
 			// Fix Camera Orientation
 			setCameraDisplayOrientation(this, 0, camera);
+			setCameraParameters();
 			
-			Camera.Parameters p = camera.getParameters();
-
-			// Kleinste Previewaufloesung
-			List<Camera.Size> previewlist = p.getSupportedPreviewSizes();
-			Camera.Size previewsize = previewlist.get(previewlist.size() - 1);
-
-			int i=1;
-			// TODO: Qualität vom Helfer senden lassen: 3 Stufen bis 640 x 480
-			while(previewsize.width <= 200 & previewsize.height <= 100) {
-				previewsize = previewlist.get(previewlist.size() - (1 + i));
-				i++;
-			}
-			p.setPreviewSize(previewsize.width, previewsize.height);
-			Debug.doDebug("Auflösung: " + previewsize.width + " x " + previewsize.height);
-			camera.setParameters(p);
 			holder.addCallback(this);
 			
 		}
-		handler.postDelayed(this,INTERVALL); // startet handler (run())!
+		gethandler.postDelayed(getrun,INTERVALL); // startet handler (run())!
+		sethandler.postDelayed(setrun,LONG_INTERVALL);
 	}
 	
 	@Override
@@ -133,21 +151,6 @@ public class MainActivity extends Activity implements Runnable, LocationListener
 		// Inflate the menu; this adds items to the action bar if it is present.
 		getMenuInflater().inflate(R.menu.main, menu);
 		return true;
-	}
-
-	@Override
-	public void run() {
-		// Bildle machen
-		if(camera!=null)
-			camera.setOneShotPreviewCallback(precallback);
-
-		// Methode fuer den Handler laeuft alle INTERVALL ms
-		data.updateData();
-		data.publishData();
-		data.sendData();
-		
-		if (data.isStatus())
-			handler.postDelayed(this,INTERVALL); // startet nach INTERVALL wieder den handler (Endlosschleife)
 	}
 
 	/**
@@ -251,5 +254,48 @@ public class MainActivity extends Activity implements Runnable, LocationListener
 	         result = (info.orientation - degrees + 360) % 360;
 	     }
 	     camera.setDisplayOrientation(result);
-	 }
+	}
+	
+	private void setCameraParameters() {
+		camera.stopPreview();
+		Camera.Parameters p = camera.getParameters();
+
+		// Kleinste Previewaufloesung
+		List<Camera.Size> previewlist = p.getSupportedPreviewSizes();
+		Camera.Size previewsize = previewlist.get(previewlist.size() - 1);
+
+		if(data.getResolution() == null)
+			data.CamHasChanged(true);
+		else if(data.getResolution().equals("low"))
+			data.CamHasChanged(false);
+		else if(data.getResolution().equals("medium") || data.getResolution().equals("high")) {
+			int i=1, minwidth=0, minheight=0;
+			if(data.getResolution().equals("medium")) {
+				minwidth = 320;
+				minheight = 240;
+			} else if(data.getResolution().equals("high")) {
+				minwidth = 640;
+				minheight = 480;
+			}
+			
+			while(previewsize.width < minwidth & previewsize.height < minheight) {
+				previewsize = previewlist.get(previewlist.size() - (1 + i));
+				i++;
+			}
+			data.CamHasChanged(false);
+		}
+		
+		if(data.getFlashlight() & (data.getResolution() != null)) {
+			p.setFlashMode(Camera.Parameters.FLASH_MODE_TORCH);
+			data.CamHasChanged(false);
+		} else if((!data.getFlashlight()) & (data.getResolution() != null)) {
+			p.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
+			data.CamHasChanged(false);
+		}
+		
+		p.setPreviewSize(previewsize.width, previewsize.height);
+		Debug.doDebug("Auflösung: " + previewsize.width + " x " + previewsize.height);
+		camera.setParameters(p);
+		camera.startPreview();
+	}
 }
