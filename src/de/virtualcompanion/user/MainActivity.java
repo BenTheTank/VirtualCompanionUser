@@ -3,6 +3,7 @@ package de.virtualcompanion.user;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
+import java.util.Locale;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -17,6 +18,8 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.speech.tts.TextToSpeech;
+import android.speech.tts.TextToSpeech.OnInitListener;
 import android.util.Base64;
 import android.util.Log;
 import android.view.Menu;
@@ -61,6 +64,7 @@ public class MainActivity extends Activity implements LocationListener, SurfaceH
 	private static final int INTERVALL = 50; // Verzoegerung in ms
 	private static final int LONG_INTERVALL = 5000; // Verzoegerung in ms
 	private Data data; // Datencontainer
+	private TextToSpeech tts;
 	
 	// Kamera
 	private Camera camera = null;
@@ -75,6 +79,17 @@ public class MainActivity extends Activity implements LocationListener, SurfaceH
 		final SurfaceView view = (SurfaceView) findViewById(R.id.view);
 		view.setKeepScreenOn(true);
 		holder = view.getHolder();
+		
+		// TTS
+		tts = new TextToSpeech(this, new OnInitListener() {
+			@Override
+			public void onInit(int status) {
+				tts.setLanguage(Locale.GERMAN);
+				tts.speak("Herzlich willkommen beim Virtuellen Begleiter. " +
+						"Auf der oberen Bildschirmhälfte befindet sich der Knopf zum Anrufen ", TextToSpeech.QUEUE_FLUSH, null);
+			}
+		});
+		
 	}
 	
 	@Override
@@ -107,6 +122,8 @@ public class MainActivity extends Activity implements LocationListener, SurfaceH
 		
 		data.setStatus(false);
 		data.locationManager.removeUpdates((LocationListener) this);
+		
+		tts.shutdown();
 		
 		if (camera != null) {
 			holder.removeCallback(this);
@@ -266,14 +283,18 @@ public class MainActivity extends Activity implements LocationListener, SurfaceH
 
 		if(data.getResolution() == null)
 			data.CamHasChanged(true);
-		else if(data.getResolution().equals("low"))
+		else if(data.getResolution().equals("low")) {
+			tts.speak("Niedrige Auflösung", TextToSpeech.QUEUE_ADD, null);
 			data.CamHasChanged(false);
+		}
 		else if(data.getResolution().equals("medium") || data.getResolution().equals("high")) {
 			int i=1, minwidth=0, minheight=0;
 			if(data.getResolution().equals("medium")) {
+				tts.speak("Mittlere Auflösung", TextToSpeech.QUEUE_ADD, null);
 				minwidth = 320;
 				minheight = 240;
 			} else if(data.getResolution().equals("high")) {
+				tts.speak("Hohe Auflösung", TextToSpeech.QUEUE_ADD, null);
 				minwidth = 640;
 				minheight = 480;
 			}
@@ -287,9 +308,11 @@ public class MainActivity extends Activity implements LocationListener, SurfaceH
 		
 		if(data.getFlashlight() & (data.getResolution() != null)) {
 			p.setFlashMode(Camera.Parameters.FLASH_MODE_TORCH);
+			tts.speak("Kameralicht aktiviert", TextToSpeech.QUEUE_ADD, null);	
 			data.CamHasChanged(false);
 		} else if((!data.getFlashlight()) & (data.getResolution() != null)) {
 			p.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
+			tts.speak("Kameralicht deaktiviert", TextToSpeech.QUEUE_ADD, null);
 			data.CamHasChanged(false);
 		}
 		
