@@ -443,10 +443,13 @@ public class MainActivity extends Activity implements LocationListener, SurfaceH
 	@Override
 	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences,
 			String key) {
-		if(sip != null)	{
-			sip.onDestroy();
-			sip = null;
-			sip = new Sip(this);
+		
+		if(key.equals("namePref") || key.equals("domainPref") || key.equals("passPref")) {
+			if(sip != null)	{
+				sip.onDestroy();
+				sip = null;
+				sip = new Sip(this);
+			}
 		}
 	}
 	
