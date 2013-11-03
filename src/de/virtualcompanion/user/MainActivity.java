@@ -5,8 +5,13 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 
+import de.virtualcompanion.user.IncomingCallFragment.IncomingCallFragmentListener;
+
 import android.app.Activity;
+import android.app.DialogFragment;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
@@ -16,8 +21,10 @@ import android.hardware.Camera.Size;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.media.AudioManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Vibrator;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.TextToSpeech.OnInitListener;
 import android.util.Base64;
@@ -27,8 +34,12 @@ import android.view.MenuItem;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.ImageButton;
 
-public class MainActivity extends Activity implements LocationListener, SurfaceHolder.Callback {
+public class MainActivity extends Activity implements LocationListener, SurfaceHolder.Callback, 
+									IncomingCallFragmentListener, OnSharedPreferenceChangeListener {
 
 	// Handler fuer zeitverzoegertes senden
 	private Handler sethandler = new Handler();
@@ -52,10 +63,14 @@ public class MainActivity extends Activity implements LocationListener, SurfaceH
 			// Bildle machen
 			if(camera!=null)
 				camera.setOneShotPreviewCallback(precallback);
+			
 			data.updateData();
 			data.publishData();
 			data.sendData();
 			
+			// Changing the make call icon
+			updateCallIcon();
+						
 			if (data.isStatus())
 				gethandler.postDelayed(getrun, INTERVALL); // startet nach INTERVALL wieder den handler (Endlosschleife)
 		}		
@@ -70,6 +85,35 @@ public class MainActivity extends Activity implements LocationListener, SurfaceH
 	private Camera camera = null;
 	private SurfaceHolder holder = null;
 	
+	/*
+	 * SIP
+	 * (non-Javadoc)
+	 * @see android.app.Activity#onCreate(android.os.Bundle)
+	 */
+	
+	protected Sip sip = null;
+	private boolean isInCall = false;
+	private boolean startStopCallButtonReady = false;
+	private ImageButton buttonStartStopCall;
+	private OnClickListener buttonStartStopCall_OnClickListener = new OnClickListener(){
+
+		@Override
+		public void onClick(View v) {
+			callButtonBehaviour();
+			Vibrator vibrator = (Vibrator) getApplicationContext().getSystemService(VIBRATOR_SERVICE);
+			if(vibrator.hasVibrator())	
+				vibrator.vibrate(50);
+		}
+		
+	};
+	
+	
+	/*
+	 * SIP variables DONE
+	 * (non-Javadoc)
+	 * @see android.app.Activity#onCreate(android.os.Bundle)
+	 */
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -79,6 +123,9 @@ public class MainActivity extends Activity implements LocationListener, SurfaceH
 		final SurfaceView view = (SurfaceView) findViewById(R.id.view);
 		view.setKeepScreenOn(true);
 		holder = view.getHolder();
+		buttonStartStopCall = (ImageButton) findViewById(R.id.imageButtonStartStopCall);
+		buttonStartStopCall.setOnClickListener(buttonStartStopCall_OnClickListener);
+		startSip();
 		
 		// TTS
 		tts = new TextToSpeech(this, new OnInitListener() {
@@ -146,6 +193,7 @@ public class MainActivity extends Activity implements LocationListener, SurfaceH
     @Override
     protected void onDestroy() {
     	super.onDestroy();
+    	sip.onDestroy();
     }
 	
 	@Override
@@ -274,12 +322,16 @@ public class MainActivity extends Activity implements LocationListener, SurfaceH
 	}
 	
 	private void setCameraParameters() {
+		// TODO NULLPOINTER in camera
 		camera.stopPreview();
 		Camera.Parameters p = camera.getParameters();
 
 		// Kleinste Previewaufloesung
 		List<Camera.Size> previewlist = p.getSupportedPreviewSizes();
 		Camera.Size previewsize = previewlist.get(previewlist.size() - 1);
+		
+		// Autofokus
+		p.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
 
 		if(data.getResolution() == null)
 			data.CamHasChanged(true);
@@ -321,4 +373,85 @@ public class MainActivity extends Activity implements LocationListener, SurfaceH
 		camera.setParameters(p);
 		camera.startPreview();
 	}
+	
+	/**
+	 * Some routines for sip
+	 */
+	
+	private void startSip()	{
+	    sip = new Sip(this);
+	}
+	
+	// Method for changing the call icon
+	public void updateCallIcon()	{
+		if(sip != null & sip.isSipRegistrated())	{
+			isInCall = sip.isInCall();
+			if(isInCall)
+				buttonStartStopCall.setImageResource(R.drawable.phone_red_big);
+			else
+				buttonStartStopCall.setImageResource(R.drawable.phone_green_big);
+		} else if(sip.isError())	{
+			buttonStartStopCall.setImageResource(R.drawable.phone_error_big);
+		} else	{
+			buttonStartStopCall.setImageResource(R.drawable.phone_gray_big);
+		}
+		
+		// enables the menu button
+		startStopCallButtonReady = true;
+	}
+	
+	// Behaviour selection for clicking the call button
+	private void callButtonBehaviour()	{
+		if(startStopCallButtonReady & sip.isSipRegistrated() & !isInCall)	{
+    		sip.initiateAudioCall();
+    		this.setVolumeControlStream(AudioManager.STREAM_VOICE_CALL);
+    		
+    		// this makes it impossible to execute the associated method multiple times
+    		// at the same time by pressing multiple times at the icon before it
+    		// changed its appearance
+    		startStopCallButtonReady = false;
+    	} else if(startStopCallButtonReady & sip.isSipRegistrated() & isInCall)	{
+    		sip.endAudioCall();
+    		this.setVolumeControlStream(AudioManager.STREAM_RING);
+    		
+    		// this makes it impossible to execute the associated method multiple times
+    		// at the same time by pressing multiple times at the icon before it
+    		// changed its appearance
+    		startStopCallButtonReady = false;
+    	}
+	}
+
+	public void openIncomingCallDialog()	{
+		DialogFragment dialog = new IncomingCallFragment();
+		dialog.show(getFragmentManager(), "IncomingCallFragment");
+	}
+	
+	@Override
+	public void onDialogPositiveClick(DialogFragment dialog) {
+		sip.answerCall();
+		this.setVolumeControlStream(AudioManager.STREAM_VOICE_CALL);
+	}
+
+	@Override
+	public void onDialogNegativeClick(DialogFragment dialog) {
+		sip.endAudioCall();
+	}
+	
+	/**
+	 * Method of PreferenceChanged-Listener
+	 */
+	@Override
+	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences,
+			String key) {
+		if(sip != null)	{
+			sip.onDestroy();
+			sip = null;
+			sip = new Sip(this);
+		}
+	}
+	
+	/**
+	 * SIP Methods done
+	 */
+	
 }

@@ -1,5 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
     <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-        <EditTextPreference android:title="@string/username" android:key="username"/>
-        <CheckBoxPreference android:title="@string/usegps" android:key="usegps"/>
+        <EditTextPreference
+            android:title="@string/username"
+            android:key="username" />
+        
+        <PreferenceCategory
+        	android:title="@string/sip_preferences">
+        
+	        <EditTextPreference
+		        android:name="SIP Username"
+		        android:summary="Username for your SIP Account"
+		        android:defaultValue="1006"
+		        android:title="Enter Username"
+		        android:key="namePref" />
+	    	<EditTextPreference
+		        android:name="SIP Domain"
+		        android:summary="Domain for your SIP Account"
+		        android:defaultValue="bb-projects.de"
+		        android:title="Enter Domain"
+		        android:key="domainPref" />
+	    	<EditTextPreference
+		        android:name="SIP Password"
+		        android:summary="Password for your SIP Account"
+		        android:defaultValue="1234"
+		        android:title="Enter Password"
+		        android:key="passPref"
+		        android:password="true" />
+    	</PreferenceCategory>
+    
+    <PreferenceCategory
+        android:title="Buddy Einstellungen" >
+        
+        <EditTextPreference
+            android:name="Buddy Username"
+            android:summary="Username of your Buddy's SIP Account"
+            android:defaultValue="1001"
+            android:title="Enter Username"
+            android:key="nameBuddyPref" />
+        </PreferenceCategory>
     </PreferenceScreen>

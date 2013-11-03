@@ -119,7 +119,7 @@ public class Data {
 		Debug.doDebug("Netzwerktyp: " + network_type);
 		Debug.doDebug("Location: " + location.toString());
 		Debug.doDebug("IP: " + getLocalIpAddress());
-		Debug.doDebug("JSON: " + createJSON().toString());
+		//Debug.doDebug("JSON: " + createJSON().toString());
 	}
 	
 	public void updateData() {
@@ -135,10 +135,9 @@ public class Data {
 	public void sendData() {
 		
 		Debug.doDebug("sendData() called");
-		if (netInf != null && netInf.isConnected())
+		if (netInf != null && netInf.isConnected()) {
 			new SendToWebpage().execute(domain + post);
-			//new SendToWebpage().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, domain + post);
-		else
+		} else
 			Debug.doError("No Network Connection available");
 	}
 	
@@ -290,7 +289,7 @@ public class Data {
 		}
 		
 		@Override
-		protected void onPostExecute(String result){
+		protected void onPostExecute(String result){			
 		}
 	}
 	
