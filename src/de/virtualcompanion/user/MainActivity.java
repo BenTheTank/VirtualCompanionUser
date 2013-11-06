@@ -169,6 +169,7 @@ public class MainActivity extends Activity implements LocationListener, SurfaceH
 		
 		data.setStatus(false);
 		data.locationManager.removeUpdates((LocationListener) this);
+		data.sensorManager.unregisterListener(data.sensorListener);
 		
 		tts.shutdown();
 		

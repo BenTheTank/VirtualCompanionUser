@@ -21,6 +21,10 @@ import org.json.JSONObject;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -44,7 +48,7 @@ import android.text.format.Formatter;
 public class Data {
 
 	// Handyausrichtung
-	private String orientation; // Wie ist das Handy ausgerichtet
+	private float orientation; // Wie ist das Handy ausgerichtet
 	
 	// GPS Daten
 	private Location location; // Position
@@ -73,6 +77,9 @@ public class Data {
 	private ConnectivityManager conMan;
 	private SharedPreferences prefs;
 	protected LocationManager locationManager;
+	protected SensorManager sensorManager;
+	protected SensorEventListener sensorListener;
+	private Sensor sensor;
 	
 	/* Konstanten */	
 	private static final String TAG_TIMESTAMP = "timestamp";
@@ -106,6 +113,20 @@ public class Data {
 		// Zugriff auf den Location Manager
 		locationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
 		locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, (LocationListener) context);
+		sensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
+		sensor = sensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION);
+		sensorListener = new SensorEventListener() {
+			@Override
+			public void onAccuracyChanged(Sensor arg0, int arg1) {
+			}
+			@Override
+			public void onSensorChanged(SensorEvent event) {
+				orientation = event.values[0]; 	
+			}
+		};
+		if (sensor != null) {
+		      sensorManager.registerListener(sensorListener, sensor, SensorManager.SENSOR_DELAY_NORMAL);
+		}
 	}
 	
 	// For Debugging
@@ -193,6 +214,13 @@ public class Data {
 	    return null;
 	}
 	
+	private float getOrientation() {
+		if(location.getBearing() == 0 & sensor != null)
+			return orientation;
+		else
+			return location.getBearing();
+	}
+	
 	private Location getLocation() {
 		// Holt die Location fuer Daten
 		Location mlocation;
@@ -236,7 +264,7 @@ public class Data {
 		try {
 			subobject.put(TAG_LOC_ACC, location.getAccuracy());
 			subobject.put(TAG_LOC_ALT, location.getAltitude());
-			subobject.put(TAG_LOC_BEAR, location.getBearing());
+			subobject.put(TAG_LOC_BEAR, getOrientation());
 			subobject.put(TAG_LOC_LAT, location.getLatitude());
 			subobject.put(TAG_LOC_LONG, location.getLongitude());
 			subobject.put(TAG_LOC_ET, location.getElapsedRealtimeNanos());
