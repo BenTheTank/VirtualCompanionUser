@@ -269,7 +269,7 @@ public class Data {
 			subobject.put(TAG_LOC_LONG, location.getLongitude());
 			subobject.put(TAG_LOC_ET, location.getElapsedRealtimeNanos());
 			
-			object.put(TAG_TIMESTAMP, String.valueOf(datum.getTime()/1000));	
+			object.put(TAG_TIMESTAMP, String.valueOf(datum.getTime()));	
 			object.put(TAG_ID, id);
 			object.put(TAG_STATUS, (status ? "TRUE" : "FALSE"));
 			object.put(TAG_NAME, name);
