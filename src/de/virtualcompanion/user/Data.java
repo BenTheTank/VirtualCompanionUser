@@ -267,8 +267,7 @@ public class Data {
 			subobject.put(TAG_LOC_BEAR, getOrientation());
 			subobject.put(TAG_LOC_LAT, location.getLatitude());
 			subobject.put(TAG_LOC_LONG, location.getLongitude());
-			subobject.put(TAG_LOC_ET, location.getElapsedRealtimeNanos());
-			
+			subobject.put(TAG_LOC_ET, ((android.os.Build.VERSION.SDK_INT >= 17) ? location.getElapsedRealtimeNanos() : "0"));
 			object.put(TAG_TIMESTAMP, String.valueOf(datum.getTime()));	
 			object.put(TAG_ID, id);
 			object.put(TAG_STATUS, (status ? "TRUE" : "FALSE"));
