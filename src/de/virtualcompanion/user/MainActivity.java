@@ -332,7 +332,14 @@ public class MainActivity extends Activity implements LocationListener, SurfaceH
 		Camera.Size previewsize = previewlist.get(previewlist.size() - 1);
 		
 		// Autofokus
-		p.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+		List<String> fokusModes = p.getSupportedFocusModes();
+		if(fokusModes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE))
+			p.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+		else if(fokusModes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO))
+			p.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+		else
+			p.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
+		Debug.doInfo("Fokus: " + p.getFocusMode());
 
 		if(data.getResolution() == null)
 			data.CamHasChanged(true);
@@ -358,7 +365,7 @@ public class MainActivity extends Activity implements LocationListener, SurfaceH
 			}
 			data.CamHasChanged(false);
 		}
-		
+
 		if(data.getFlashlight() & (data.getResolution() != null)) {
 			p.setFlashMode(Camera.Parameters.FLASH_MODE_TORCH);
 			tts.speak("Kameralicht aktiviert", TextToSpeech.QUEUE_ADD, null);	
@@ -368,9 +375,9 @@ public class MainActivity extends Activity implements LocationListener, SurfaceH
 			tts.speak("Kameralicht deaktiviert", TextToSpeech.QUEUE_ADD, null);
 			data.CamHasChanged(false);
 		}
-		
+
 		p.setPreviewSize(previewsize.width, previewsize.height);
-		Debug.doDebug("Auflösung: " + previewsize.width + " x " + previewsize.height);
+		Debug.doInfo("Auflösung: " + previewsize.width + " x " + previewsize.height);
 		camera.setParameters(p);
 		camera.startPreview();
 	}
